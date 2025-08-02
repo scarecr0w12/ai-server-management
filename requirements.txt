@@ -1,0 +1,36 @@
+# Server Management System with AI Integration
+# Requirements and Dependencies
+
+## Backend Dependencies
+- Node.js >= 16.x
+- Express.js >= 4.18.x
+- Socket.io >= 4.7.x
+- OpenAI API client >= 4.0.x
+- node-ssh >= 13.0.x
+- dotenv >= 16.3.x
+- PostgreSQL >= 8.11.x
+
+## Frontend Dependencies
+- React >= 18.x
+- TypeScript >= 5.2.x
+- Material-UI (MUI) >= 5.x
+- React Router >= 6.x
+
+## Development Dependencies
+- Concurrently >= 8.2.x
+- Nodemon (optional for development)
+
+## External Services
+- OpenAI API key (for AI features)
+- Access to servers via SSH (for diagnostics feature)
+
+## Installation
+1. Install Node.js and npm
+2. Run `npm install` in both frontend and backend directories
+3. Set up environment variables in .env files
+4. Configure OpenAI API key
+
+## Notes
+- Ensure SSH access is properly configured for server diagnostics
+- PostgreSQL database setup required for server management features
+- Proper firewall and security configurations needed for production deployment

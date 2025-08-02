@@ -1,0 +1,124 @@
+name: 🚀 CI Pipeline
+
+on:
+  # Only run on main branch and PRs to minimize costs
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  # Manual trigger for releases
+  workflow_dispatch:
+
+# Cancel in-progress runs for same PR to save costs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Single job that handles both frontend and backend
+  test-and-build:
+    name: 🧪 Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # Prevent runaway costs
+
+    strategy:
+      matrix:
+        node-version: [18] # Single version to minimize runs
+      fail-fast: true
+
+    steps:
+    - name: 📂 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: |
+          backend/package-lock.json
+          frontend/package-lock.json
+
+    # Backend CI
+    - name: 🔧 Install Backend Dependencies
+      working-directory: ./backend
+      run: npm ci --only=production
+
+    - name: 🏗️ Build Backend
+      working-directory: ./backend
+      run: npm run build
+
+    - name: 🧪 Test Backend (Basic)
+      working-directory: ./backend
+      run: |
+        # Only run basic compilation test to save time
+        npm run build
+        echo "✅ Backend builds successfully"
+
+    # Frontend CI
+    - name: 🔧 Install Frontend Dependencies
+      working-directory: ./frontend
+      run: npm ci --only=production
+
+    - name: 🏗️ Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: 🧪 Test Frontend (Basic)
+      working-directory: ./frontend
+      run: |
+        # Only run build test to save time and costs
+        npm run build
+        echo "✅ Frontend builds successfully"
+
+    # Cache build artifacts for potential deployment
+    - name: 💾 Cache Build Artifacts
+      if: github.ref == 'refs/heads/main'
+      uses: actions/cache@v3
+      with:
+        path: |
+          backend/dist
+          frontend/build
+        key: build-${{ github.sha }}
+        restore-keys: |
+          build-
+
+  # Only run security scan on main branch
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+
+    steps:
+    - name: 📂 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔍 Run Security Audit
+      run: |
+        cd backend && npm audit --audit-level=high || true
+        cd ../frontend && npm audit --audit-level=high || true
+
+  # Notification job (only on failure to save costs)
+  notify-on-failure:
+    name: 📢 Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [test-and-build]
+    if: failure() && github.ref == 'refs/heads/main'
+    timeout-minutes: 2
+
+    steps:
+    - name: 📧 Send Failure Notification
+      run: |
+        echo "🚨 CI Pipeline failed on main branch"
+        echo "::warning::CI Pipeline failed - check logs for details"

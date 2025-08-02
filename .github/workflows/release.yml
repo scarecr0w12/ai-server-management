@@ -1,0 +1,159 @@
+name: 🎉 Release Pipeline
+
+on:
+  # Only trigger on version tags to minimize costs
+  push:
+    tags:
+      - 'v*.*.*'
+  # Manual release trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+# Prevent concurrent releases
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    name: 📦 Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+    - name: 📂 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Full history for changelog
+
+    - name: 🏷️ Get Version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION=${GITHUB_REF#refs/tags/}
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: 📝 Generate Release Notes
+      id: release_notes
+      run: |
+        # Extract version-specific changelog
+        VERSION="${{ steps.version.outputs.version }}"
+        if [ -f "CHANGELOG.md" ]; then
+          # Get changes for this version
+          NOTES=$(sed -n "/## \[${VERSION#v}\]/,/## \[/p" CHANGELOG.md | head -n -1)
+          if [ -z "$NOTES" ]; then
+            NOTES="## Changes in ${VERSION}\n\nSee CHANGELOG.md for detailed changes."
+          fi
+        else
+          NOTES="## Changes in ${VERSION}\n\nFirst release of AI-Powered Server Management System."
+        fi
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: 🎉 Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        release_name: Release ${{ steps.version.outputs.version }}
+        body: ${{ steps.release_notes.outputs.notes }}
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+
+  build-and-upload:
+    name: 🏗️ Build & Upload Assets
+    runs-on: ubuntu-latest
+    needs: create-release
+    timeout-minutes: 25
+
+    steps:
+    - name: 📂 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          backend/package-lock.json
+          frontend/package-lock.json
+
+    - name: 🏗️ Build Backend
+      working-directory: ./backend
+      run: |
+        npm ci --only=production
+        npm run build
+
+    - name: 🏗️ Build Frontend
+      working-directory: ./frontend
+      run: |
+        npm ci --only=production
+        npm run build
+
+    - name: 📦 Create Release Archives
+      run: |
+        # Create backend distribution
+        cd backend
+        tar -czf ../server-management-backend-${{ needs.create-release.outputs.version }}.tar.gz \
+          dist/ package.json package-lock.json README.md
+        cd ..
+        
+        # Create frontend distribution
+        cd frontend
+        tar -czf ../server-management-frontend-${{ needs.create-release.outputs.version }}.tar.gz \
+          build/ package.json package-lock.json README.md
+        cd ..
+        
+        # Create full source distribution
+        tar -czf server-management-full-${{ needs.create-release.outputs.version }}.tar.gz \
+          --exclude=node_modules \
+          --exclude=dist \
+          --exclude=build \
+          --exclude=.git \
+          backend/ frontend/ docs/ *.md package.json .gitignore
+
+    - name: 📤 Upload Backend Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./server-management-backend-${{ needs.create-release.outputs.version }}.tar.gz
+        asset_name: server-management-backend-${{ needs.create-release.outputs.version }}.tar.gz
+        asset_content_type: application/gzip
+
+    - name: 📤 Upload Frontend Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./server-management-frontend-${{ needs.create-release.outputs.version }}.tar.gz
+        asset_name: server-management-frontend-${{ needs.create-release.outputs.version }}.tar.gz
+        asset_content_type: application/gzip
+
+    - name: 📤 Upload Full Source
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./server-management-full-${{ needs.create-release.outputs.version }}.tar.gz
+        asset_name: server-management-full-${{ needs.create-release.outputs.version }}.tar.gz
+        asset_content_type: application/gzip
