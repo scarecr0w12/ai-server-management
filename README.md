@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/windsurf-project/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/scarecr0w12/windsurf-project/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/yourusername/windsurf-project/ci.yml?branch=main)](https://github.com/yourusername/windsurf-project/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue.svg)](https://www.typescriptlang.org/)
@@ -327,13 +327,34 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ### Development Workflow
 
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+- **🐛 Bug Reports**: Structured templates with environment details and reproduction steps
+- **✨ Feature Requests**: Comprehensive templates with problem statements and priority levels
+- **📚 Documentation**: Templates for documentation improvements and corrections
+- **❓ Questions**: Guided templates for community support
 
-### Code Standards
+### 🔄 Pull Request Process
+
+- **📝 PR Templates**: Comprehensive templates with testing checklists and deployment notes
+- **🏷️ Automatic Labeling**: Smart labeling system for issue tracking and organization
+- **🔍 Review Guidelines**: Structured review process for maintainers
+
+### 🏷️ Label System
+
+We use a comprehensive labeling system:
+- **Priority**: `critical`, `high`, `medium`, `low`
+- **Type**: `bug`, `enhancement`, `documentation`, `security`
+- **Status**: `needs-triage`, `in-progress`, `needs-review`
+- **Component**: `frontend`, `backend`, `api`, `database`
+
+### 📖 Detailed Guidelines
+
+For comprehensive contributing guidelines, see our [CONTRIBUTING.md](.github/CONTRIBUTING.md) file which includes:
+- Development environment setup
+- Coding standards and conventions
+- Testing guidelines and coverage requirements
+- Review process documentation
+
+### 🛠️ Development Standards
 
 - **TypeScript**: Strict mode with comprehensive typing
 - **ESLint**: Standard configuration with custom rules

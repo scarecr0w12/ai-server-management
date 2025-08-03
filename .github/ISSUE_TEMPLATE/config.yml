@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discord Community
+    url: https://discord.gg/your-discord
+    about: Join our Discord server for community discussions and quick help
+  - name: 🤝 Discussions
+    url: https://github.com/scarecr0w12/windsurf-project/discussions
+    about: Use GitHub Discussions for general questions and community conversations
+  - name: 🛡️ Security Issues
+    url: https://github.com/scarecr0w12/windsurf-project/security/advisories/new
+    about: Report security vulnerabilities privately

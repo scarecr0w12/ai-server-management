@@ -1,0 +1,49 @@
+name: ❓ Question
+description: Ask a question about the project
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! Please provide as much context as possible to help us give you the best answer.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Ask your question here...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant context that might help us understand your question better
+      placeholder: |
+        - What are you trying to accomplish?
+        - What have you already tried?
+        - Any relevant code, configuration, or error messages?
+
+  - type: textarea
+    id: searched
+    attributes:
+      label: Research Done
+      description: Have you searched for existing answers?
+      placeholder: |
+        - [ ] I've searched existing issues
+        - [ ] I've checked the documentation
+        - [ ] I've searched online
+        - [ ] I've asked in community forums
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/scarecr0w12/your-repo/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

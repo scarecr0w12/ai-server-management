@@ -1,0 +1,33 @@
+name: 🏷️ Sync Labels
+
+on:
+  # Only run when labels.yml is modified to save costs
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/labels.yml'
+  # Manual trigger for initial setup
+  workflow_dispatch:
+
+# Prevent concurrent label syncing
+concurrency:
+  group: sync-labels
+  cancel-in-progress: false
+
+jobs:
+  sync-labels:
+    name: 🔄 Sync Repository Labels
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: 📂 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🏷️ Sync Labels
+      uses: EndBug/label-sync@v2
+      with:
+        config-file: .github/labels.yml
+        token: ${{ secrets.GITHUB_TOKEN }}
+        delete-other-labels: false # Keep existing labels not in config
+        dry-run: false

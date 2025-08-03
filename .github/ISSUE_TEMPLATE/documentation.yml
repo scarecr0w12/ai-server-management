@@ -1,0 +1,71 @@
+name: 📚 Documentation
+description: Report missing or incorrect documentation
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! Please provide details about what needs to be added or corrected.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation issue is this?
+      options:
+        - Missing documentation
+        - Incorrect/outdated documentation
+        - Unclear/confusing documentation
+        - Typo or formatting issue
+        - API documentation
+        - Code examples
+        - Installation guide
+        - User guide
+        - Developer guide
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the documentation located (or where should it be)?
+      placeholder: |
+        - File: README.md, docs/api.md, etc.
+        - Section: Installation, API Reference, etc.
+        - URL: https://...
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's the Issue?
+      description: Describe what's missing, incorrect, or unclear
+      placeholder: Explain what needs to be fixed or added...
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Fix
+      description: If you have suggestions for how to improve the documentation, please share them
+      placeholder: How would you improve this documentation?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or examples
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/scarecr0w12/your-repo/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
