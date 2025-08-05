@@ -1,3 +1,9 @@
+import os
+import sys
+import pathlib
+# Ensure project root is in the Python path so local modules can be imported
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+
 import unittest
 import requests
 import json
@@ -5,11 +11,13 @@ from mcp_client import MCPClient
 from agent_service import initialize_agent_service
 from llm_service import process_chat_message
 
+@unittest.skipUnless(os.getenv('RUN_INTEGRATION_TESTS') == '1',
+                     "Integration tests require RUN_INTEGRATION_TESTS=1 and running backend/MCP servers")
 class TestServerManagement(unittest.TestCase):
     def setUp(self):
         self.mcp_client = MCPClient()
         self.agent_service = initialize_agent_service()
-        self.base_url = 'http://localhost:5000'
+        self.base_url = 'http://localhost:5010'
 
     def test_health_check(self):
         """Test health check endpoint"""

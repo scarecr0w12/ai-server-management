@@ -21,7 +21,7 @@ const Chat = () => {
       setInput('');
 
       try {
-        const response = await fetch('http://localhost:5000/api/chat', {
+        const response = await fetch('http://localhost:5010/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

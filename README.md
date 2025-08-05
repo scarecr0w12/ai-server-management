@@ -97,7 +97,7 @@ npm start
 
 ### 4. Access the Application
 
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:4000
 - **Backend API**: http://localhost:5000
 - **WebSocket**: ws://localhost:5000
 
@@ -163,12 +163,12 @@ Create `.env` files in both backend and frontend directories:
 OPENAI_API_KEY=your_openai_api_key_here
 
 # Server Configuration
-PORT=5000
+PORT=5010
 NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:4000
 
 # Database (Optional)
-DATABASE_URL=postgresql://user:pass@localhost:5432/serverdb
+DATABASE_URL=postgresql://user:pass@localhost:5442/serverdb
 
 # SSH Configuration (Optional)
 SSH_PRIVATE_KEY_PATH=/path/to/ssh/key
@@ -178,8 +178,8 @@ SSH_PASSPHRASE=your_ssh_passphrase
 #### Frontend (.env)
 
 ```env
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_WS_URL=ws://localhost:5000
+REACT_APP_API_URL=http://localhost:5010
+REACT_APP_WS_URL=ws://localhost:5010
 ```
 
 ## 🎮 Usage

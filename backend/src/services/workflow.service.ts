@@ -1,6 +1,7 @@
 import { AiService } from './ai.service';
 import { DiagnosticsService, DiagnosticRequest, DiagnosticResult } from './diagnostics.service';
 import { ServerManager } from './server-manager.service';
+import { MemoryService, ProblemPattern, Solution } from './memory.service';
 
 export interface WorkflowStep {
   id: string;
@@ -52,12 +53,14 @@ export class WorkflowService {
   private activeWorkflows = new Map<string, WorkflowExecution>();
   private workflowTemplates = new Map<string, WorkflowStep[]>();
   private learningDatabase = new Map<string, WorkflowLearning[]>();
+  private memoryService: MemoryService;
 
   constructor(
     private aiService: AiService,
     private diagnosticsService: DiagnosticsService,
     private serverManager: ServerManager
   ) {
+    this.memoryService = new MemoryService();
     this.initializeWorkflowTemplates();
   }
 

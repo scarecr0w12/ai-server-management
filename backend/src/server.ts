@@ -2,22 +2,40 @@ import express from 'express';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import { AiService } from './services/ai.service';
 import { ServerManager } from './services/server-manager.service';
 import { DiagnosticsService, ServerConnectionInfo, DiagnosticRequest } from './services/diagnostics.service';
 import { MCPServerService } from './services/mcp-server.service';
 import { WorkflowService, WorkflowContext } from './services/workflow.service';
+import { initializeMCPAnalyzers } from './services/mcp-analyzers/index';
 
 dotenv.config();
 
+// Initialize MCP analyzers on startup
+initializeMCPAnalyzers();
+
 const app = express();
 app.use(express.json());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:4000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || 'http://localhost:4000',
     methods: ['GET', 'POST']
+  },
+  transports: ['websocket'],
+  allowEIO3: true,
+  pingInterval: 25000,
+  pingTimeout: 20000,
+  allowRequest: (req, callback) => {
+    console.log('WebSocket connection request:', req.url, req.headers);
+    callback(null, true);
   }
 });
 
@@ -28,9 +46,49 @@ const diagnosticsService = new DiagnosticsService();
 const mcpServer = new MCPServerService();
 const workflowService = new WorkflowService(aiService, diagnosticsService, serverManager);
 
+// Periodically emit server updates (every 5 seconds)
+setInterval(async () => {
+  try {
+    console.log('Fetching servers for update...');
+    const servers = await serverManager.getServers();
+    console.log('Emitting server updates:', servers.length, 'servers');
+    io.emit('servers:update', servers);
+    console.log('Server updates emitted successfully');
+  } catch (error) {
+    console.error('Error emitting server updates:', error);
+  }
+}, 5000);
+
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log('Client connected');
+  console.log('Client connected, socket id:', socket.id);
+  console.log('Total connected clients:', io.engine.clientsCount);
+  console.log('Client handshake:', socket.handshake);
+  console.log('Client request headers:', socket.request.headers);
+
+  // Send initial server data to newly connected client
+  serverManager.getServers()
+    .then(servers => {
+      console.log('Sending initial server data to client:', socket.id, 'Servers count:', servers.length);
+      socket.emit('servers:update', servers);
+    })
+    .catch(error => {
+      console.error('Error sending initial server data:', error);
+    });
+
+  // Log when client disconnects
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected, socket id:', socket.id, 'reason:', reason);
+    console.log('Total connected clients after disconnect:', io.engine.clientsCount);
+    console.log('Client disconnected, socket id:', socket.id, 'reason:', reason);
+    console.log('Total connected clients:', io.engine.clientsCount);
+  });
+  
+  // Log any errors
+  socket.on('error', (error) => {
+    console.log('Socket error, socket id:', socket.id, 'error:', error);
+    console.log('Socket error, socket id:', socket.id, 'error:', error);
+  });
 
   socket.on('ai:query', async (data) => {
     try {
@@ -181,9 +239,52 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected, socket id:', socket.id, 'reason:', reason);
+    console.log('Total connected clients:', io.engine.clientsCount);
   });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    services: {
+      server: 'running',
+      websocket: 'connected',
+      database: 'available'
+    }
+  });
+});
+
+// API Routes
+app.get('/api/servers', async (req, res) => {
+  try {
+    const servers = await serverManager.getServers();
+    res.json(servers);
+  } catch (error) {
+    console.error('Error fetching servers:', error);
+    res.status(500).json({ error: 'Failed to fetch servers' });
+  }
+});
+
+app.post('/api/servers', async (req, res) => {
+  try {
+    const serverData = req.body;
+    const newServer = await serverManager.addServer(serverData);
+    res.status(201).json(newServer);
+    
+    // Emit server update to all connected clients
+    io.emit('serverUpdate', {
+      type: 'added',
+      server: newServer
+    });
+  } catch (error) {
+    console.error('Error adding server:', error);
+    res.status(500).json({ error: 'Failed to add server' });
+  }
 });
 
 // Workflow API Routes
@@ -245,6 +346,67 @@ app.post('/api/workflows/:id/pause', async (req, res) => {
   }
 });
 
+// MCP API Routes
+app.get('/api/mcp/resources', async (req, res) => {
+  try {
+    const resources = await mcpServer.listResources();
+    res.json({ resources });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.get('/api/mcp/resources/:uri', async (req, res) => {
+  try {
+    const resource = await mcpServer.readResource(decodeURIComponent(req.params.uri));
+    res.json({ resource });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.get('/api/mcp/tools', async (req, res) => {
+  try {
+    const tools = await mcpServer.listTools();
+    res.json({ tools });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.post('/api/mcp/tools/:name/call', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { arguments: args } = req.body;
+    const result = await mcpServer.callTool(name, args);
+    res.json({ result });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+app.get('/api/mcp/status', async (req, res) => {
+  try {
+    const status = await mcpServer.getServerInfo();
+    res.json({ 
+      connected: true, 
+      ...status,
+      capabilities: {
+        resources: true,
+        tools: true,
+        prompts: false
+      }
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ error: errorMessage, connected: false });
+  }
+});
+
 app.post('/api/workflows/:id/resume', async (req, res) => {
   try {
     const success = await workflowService.resumeWorkflow(req.params.id);
@@ -291,7 +453,18 @@ app.post('/api/diagnostics/analyze', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+// Add server endpoint
+app.post('/api/servers', async (req, res) => {
+  try {
+    const serverData = req.body;
+    const newServer = await serverManager.addServer(serverData);
+    res.status(201).json(newServer);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+const PORT = parseInt(process.env.PORT || '5000', 10);
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

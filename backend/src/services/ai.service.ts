@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { ConversationStorage, Conversation, Message } from '../models/conversation.model';
 import { ServerToolsManager, ToolExecutionResult } from '../tools/server-tools';
 import { PromptEngineeringService, PromptContext } from './prompt-engineering.service';
+import { MemoryService, MemoryContext, ProblemPattern } from './memory.service';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ export class AiService {
   private conversationStorage: ConversationStorage;
   private serverTools: ServerToolsManager;
   private promptService: PromptEngineeringService;
+  private memoryService: MemoryService;
 
   constructor() {
     this.openai = new OpenAI({
@@ -27,6 +29,7 @@ export class AiService {
     this.conversationStorage = new ConversationStorage();
     this.serverTools = new ServerToolsManager();
     this.promptService = new PromptEngineeringService();
+    this.memoryService = new MemoryService();
   }
 
   async processQuery(query: string): Promise<string> {
@@ -49,7 +52,12 @@ export class AiService {
     return completion.choices[0].message?.content || "I'm sorry, I couldn't process your request.";
   }
 
-  async processQueryWithContext(query: string, options: ChatOptions = {}): Promise<{ response: string; conversationId: string; messageId: string; toolCalls?: any[]; tokenCount?: number }> {
+  async processQueryWithContext(query: string, options: ChatOptions = {}): Promise<{ response: string; conversationId: string; messageId: string; toolCalls?: any[]; tokenCalls?: any[]; tokenCount?: number }> {
+    console.log('AiService: Processing query with context');
+    console.log('Query:', query);
+    console.log('Options:', JSON.stringify(options, null, 2));
+    console.log('OpenAI API Key configured:', !!process.env.OPENAI_API_KEY);
+    
     const {
       conversationId,
       userId,
@@ -58,36 +66,44 @@ export class AiService {
       maxHistoryMessages = 10
     } = options;
 
-    // Get or create conversation
-    let conversation: Conversation;
-    if (conversationId) {
-      conversation = this.conversationStorage.getConversation(conversationId) || 
-                   this.conversationStorage.createConversation(userId, 'Chat Session');
-    } else {
-      conversation = this.conversationStorage.createConversation(userId, 'Chat Session');
-    }
-
-    // Update context if provided
-    if (context) {
-      this.conversationStorage.updateConversationContext(conversation.id, context);
-    }
-
-    // Add user message to conversation
-    const userMessage = this.conversationStorage.addMessage(conversation.id, 'user', query);
-
-    // Build messages for OpenAI API with enhanced prompting
-    const systemMessage = {
-      role: "system" as const,
-      content: this.buildSystemPrompt(conversation, query)
-    };
-
-    const historyMessages = includeHistory ? 
-      this.conversationStorage.getMessagesForOpenAI(conversation.id, false).slice(-maxHistoryMessages) : 
-      [{ role: "user" as const, content: query }];
-
-    const messages = [systemMessage, ...historyMessages];
-
     try {
+      // Get or create conversation
+      console.log('Creating/getting conversation...');
+      let conversation: Conversation;
+      if (conversationId) {
+        conversation = this.conversationStorage.getConversation(conversationId) || 
+                     this.conversationStorage.createConversation(userId, 'Chat Session');
+      } else {
+        conversation = this.conversationStorage.createConversation(userId, 'Chat Session');
+      }
+      console.log('Conversation ID:', conversation.id);
+
+      // Update context if provided
+      if (context) {
+        console.log('Updating conversation context:', context);
+        this.conversationStorage.updateConversationContext(conversation.id, context);
+      }
+
+      // Add user message to conversation
+      console.log('Adding user message to conversation...');
+      const userMessage = this.conversationStorage.addMessage(conversation.id, 'user', query);
+      console.log('User message added with ID:', userMessage?.id || 'null');
+
+      // Build messages for OpenAI API with enhanced prompting
+      console.log('Building messages for OpenAI API...');
+      const systemMessage = {
+        role: "system" as const,
+        content: await this.buildSystemPrompt(conversation, query)
+      };
+
+      const historyMessages = includeHistory ? 
+        this.conversationStorage.getMessagesForOpenAI(conversation.id, false).slice(-maxHistoryMessages) : 
+        [{ role: "user" as const, content: query }];
+
+      const messages = [systemMessage, ...historyMessages];
+      console.log('Messages prepared, calling OpenAI API...');
+
+      // Call OpenAI API
       // Adjust model parameters based on context and complexity
       const promptContext = this.promptService.buildContextFromConversation(conversation);
       const modelParams = this.getOptimalModelParameters(query, promptContext);
@@ -121,18 +137,39 @@ export class AiService {
         tokenCount: completion.usage?.total_tokens || 0
       };
     } catch (error) {
+      console.log('AiService error:', error);
       const errorResponse = `Error processing request: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      this.conversationStorage.addMessage(conversation.id, 'assistant', errorResponse);
-      throw error;
+      // Note: conversation variable may be out of scope here, need to handle errors differently
+      throw new Error(errorResponse);
     }
   }
 
-  private buildSystemPrompt(conversation: Conversation, query?: string): string {
+  private async buildSystemPrompt(conversation: Conversation, query?: string): Promise<string> {
     const promptContext = this.promptService.buildContextFromConversation(conversation);
     const safeQuery = query || 'General server management assistance';
     
+    // Get memory-enhanced context
+    const memoryContext: MemoryContext = {
+      userId: conversation.userId,
+      conversationId: conversation.id,
+      serverId: conversation.context?.serverIds?.[0],
+      timeframe: 'recent',
+      category: [this.categorizeQuery(safeQuery)]
+    };
+    
+    const relevantMemory = await this.memoryService.getRelevantMemory(memoryContext);
+    
+    // Enhance prompt context with memory insights
+    const enhancedContext = {
+      ...promptContext,
+      userPreferences: relevantMemory.userPreferences || [],
+      serverProfile: relevantMemory.serverProfile,
+      similarPatterns: relevantMemory.patterns || [],
+      conversationInsights: relevantMemory.conversationInsights || []
+    };
+    
     // Use advanced adaptive prompting for enhanced contextual responses
-    let systemPrompt = this.promptService.buildAdaptivePrompt(safeQuery, promptContext);
+    let systemPrompt = this.promptService.buildAdaptivePrompt(safeQuery, enhancedContext);
     
     // Add sophisticated reasoning chain for complex queries
     if (query) {
@@ -155,6 +192,31 @@ export class AiService {
     }
     
     return systemPrompt;
+  }
+
+  private categorizeQuery(query: string): string {
+    const queryLower = query.toLowerCase();
+    
+    if (queryLower.includes('performance') || queryLower.includes('slow') || queryLower.includes('optimization')) {
+      return 'performance';
+    }
+    if (queryLower.includes('security') || queryLower.includes('firewall') || queryLower.includes('ssl')) {
+      return 'security';
+    }
+    if (queryLower.includes('deploy') || queryLower.includes('release') || queryLower.includes('update')) {
+      return 'deployment';
+    }
+    if (queryLower.includes('monitor') || queryLower.includes('alert') || queryLower.includes('log')) {
+      return 'monitoring';
+    }
+    if (queryLower.includes('database') || queryLower.includes('sql') || queryLower.includes('query')) {
+      return 'database';
+    }
+    if (queryLower.includes('troubleshoot') || queryLower.includes('error') || queryLower.includes('issue')) {
+      return 'troubleshooting';
+    }
+    
+    return 'general';
   }
 
   private assessQueryComplexity(query: string, context: any): 'low' | 'medium' | 'high' {

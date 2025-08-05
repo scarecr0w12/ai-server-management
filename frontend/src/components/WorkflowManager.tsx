@@ -124,7 +124,8 @@ export default function WorkflowManager() {
 
   const fetchWorkflows = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/workflows');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://backend:5000';
+      const response = await fetch(`${apiUrl}/api/workflows`);
       const data = await response.json();
       setWorkflows(data);
     } catch (err) {
@@ -134,7 +135,8 @@ export default function WorkflowManager() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/workflows/templates');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://backend:5000';
+      const response = await fetch(`${apiUrl}/api/workflows/templates`);
       const data = await response.json();
       setTemplates(data);
     } catch (err) {
@@ -144,7 +146,8 @@ export default function WorkflowManager() {
 
   const fetchServers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/servers');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://backend:5000';
+      const response = await fetch(`${apiUrl}/api/servers`);
       const data = await response.json();
       setServers(data);
     } catch (err) {
@@ -163,7 +166,8 @@ export default function WorkflowManager() {
         learningEnabled: newWorkflow.learningEnabled
       };
 
-      const response = await fetch('http://localhost:5000/api/workflows/start', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://backend:5000';
+      const response = await fetch(`${apiUrl}/api/workflows/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -195,7 +199,8 @@ export default function WorkflowManager() {
 
   const handlePauseWorkflow = async (workflowId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/workflows/${workflowId}/pause`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://backend:5000';
+      const response = await fetch(`${apiUrl}/api/workflows/${workflowId}/pause`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -208,7 +213,8 @@ export default function WorkflowManager() {
 
   const handleResumeWorkflow = async (workflowId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/workflows/${workflowId}/resume`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://backend:5000';
+      const response = await fetch(`${apiUrl}/api/workflows/${workflowId}/resume`, {
         method: 'POST'
       });
       if (response.ok) {

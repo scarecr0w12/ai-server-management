@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    <script>
+        const statusElement = document.getElementById('status');
+        const messagesElement = document.getElementById('messages');
+        
+        // Use the WebSocket URL from the environment or default to localhost
+        const wsUrl = 'ws://localhost:5000';
+        console.log('Connecting to WebSocket at:', wsUrl);
+        
+        const socket = new WebSocket(wsUrl);
+        
+        socket.onopen = function(event) {
+            statusElement.textContent = 'Connected';
+            console.log('WebSocket connected');
+            messagesElement.innerHTML += '<p>WebSocket connected</p>';
+        };
+        
+        socket.onmessage = function(event) {
+            console.log('WebSocket message received:', event.data);
+            messagesElement.innerHTML += '<p>Message: ' + event.data + '</p>';
+        };
+        
+        socket.onclose = function(event) {
+            statusElement.textContent = 'Disconnected';
+            console.log('WebSocket disconnected');
+            messagesElement.innerHTML += '<p>WebSocket disconnected</p>';
+        };
+        
+        socket.onerror = function(error) {
+            statusElement.textContent = 'Error';
+            console.log('WebSocket error:', error);
+            messagesElement.innerHTML += '<p>Error: ' + error + '</p>';
+        };
+    </script>
+</body>
+</html>

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Card, CardContent, CardHeader, IconButton, Avatar } from '@mui/material';
-import { Dashboard as DashboardIcon, Server as ServerIcon, ChatBubble as ChatIcon } from '@mui/icons-material';
+import { Box, Grid, Paper, Typography, Card, CardContent, CardHeader, IconButton, Avatar, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Dashboard as DashboardIcon, Storage as ServerIcon, Chat as ChatIcon, Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { getConfig, getApiUrl, loadConfig } from '../services/configService';
 
-const Dashboard = () => {
+function Dashboard() {
+  console.log('Dashboard component rendering');
+  
   const navigate = useNavigate();
   const [serverStats, setServerStats] = useState({
     total: 0,
@@ -11,21 +14,61 @@ const Dashboard = () => {
     offline: 0,
     warning: 0
   });
+  const [openAddServer, setOpenAddServer] = useState(false);
+  const [newServer, setNewServer] = useState({
+    name: '',
+    status: 'online',
+    load: 0,
+    memory: { used: 0, total: 0, percentage: 0 },
+    cpu: { usage: 0, cores: 0 },
+    disk: { used: 0, total: 0, percentage: 0 },
+    network: { bytesIn: 0, bytesOut: 0 },
+    uptime: 0,
+    alerts: 0,
+    services: { running: 0, total: 0 }
+  });
 
   useEffect(() => {
-    // Fetch server statistics
-    fetch('http://localhost:5000/api/servers')
-      .then(response => response.json())
-      .then(data => {
-        // Update stats based on server data
-        setServerStats({
-          total: data.servers.length,
-          online: data.servers.filter(s => s.status === 'online').length,
-          offline: data.servers.filter(s => s.status === 'offline').length,
-          warning: data.servers.filter(s => s.status === 'warning').length
+    console.log('Dashboard useEffect running');
+    
+    // Load configuration
+    console.log('Loading configuration...');
+    loadConfig().then(() => {
+      console.log('Configuration loaded successfully');
+      const apiUrl = getApiUrl();
+      console.log('API URL from config:', apiUrl);
+      
+      // Check if API URL is defined
+      if (!apiUrl) {
+        console.error('API URL is not defined');
+        return;
+      }
+      
+      // Fetch server statistics
+      console.log('Fetching server stats from:', `${apiUrl}/api/servers`);
+      fetch(`${apiUrl}/api/servers`)
+        .then(response => {
+          console.log('Server stats response:', response);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Server stats data:', data);
+          setServerStats({
+            total: data.length,
+            online: data.filter(server => server.status === 'online').length,
+            offline: data.filter(server => server.status === 'offline').length,
+            warning: data.filter(server => server.alerts > 0).length
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching server stats:', error);
         });
-      })
-      .catch(error => console.error('Error fetching server stats:', error));
+    }).catch(error => {
+      console.error('Error loading configuration:', error);
+    });
   }, []);
 
   const statsCards = [
@@ -73,6 +116,57 @@ const Dashboard = () => {
     }
   ];
 
+  // Handle adding a new server
+  const handleAddServer = async () => {
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/servers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newServer,
+          id: `server-${Date.now()}`,
+          lastCheck: new Date().toISOString()
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh server stats
+        fetch(`${apiUrl}/api/servers`)
+          .then(response => response.json())
+          .then(data => {
+            setServerStats({
+              total: data.length,
+              online: data.filter(server => server.status === 'online').length,
+              offline: data.filter(server => server.status === 'offline').length,
+              warning: data.filter(server => server.alerts > 0).length
+            });
+          });
+        
+        // Close dialog and reset form
+        setOpenAddServer(false);
+        setNewServer({
+          name: '',
+          status: 'online',
+          load: 0,
+          memory: { used: 0, total: 0, percentage: 0 },
+          cpu: { usage: 0, cores: 0 },
+          disk: { used: 0, total: 0, percentage: 0 },
+          network: { bytesIn: 0, bytesOut: 0 },
+          uptime: 0,
+          alerts: 0,
+          services: { running: 0, total: 0 }
+        });
+      } else {
+        console.error('Failed to add server');
+      }
+    } catch (error) {
+      console.error('Error adding server:', error);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Grid container spacing={3}>
@@ -113,9 +207,18 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            Quick Actions
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Quick Actions
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setOpenAddServer(true)}
+            >
+              Add Server
+            </Button>
+          </Box>
           <Grid container spacing={3}>
             {quickActions.map((action, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
@@ -162,6 +265,93 @@ const Dashboard = () => {
           </Paper>
         </Grid>
       </Grid>
+      
+      {/* Add Server Dialog */}
+      <Dialog open={openAddServer} onClose={() => setOpenAddServer(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add New Server</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <TextField
+              fullWidth
+              label="Server Name"
+              value={newServer.name}
+              onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              select
+              label="Status"
+              value={newServer.status}
+              onChange={(e) => setNewServer({ ...newServer, status: e.target.value })}
+              margin="normal"
+            >
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="maintenance">Maintenance</option>
+            </TextField>
+            <TextField
+              fullWidth
+              label="CPU Usage (%)"
+              type="number"
+              value={newServer.cpu.usage}
+              onChange={(e) => setNewServer({ 
+                ...newServer, 
+                cpu: { ...newServer.cpu, usage: parseInt(e.target.value) || 0 }
+              })}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Memory Used (GB)"
+              type="number"
+              value={newServer.memory.used}
+              onChange={(e) => setNewServer({ 
+                ...newServer, 
+                memory: { ...newServer.memory, used: parseFloat(e.target.value) || 0 }
+              })}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Total Memory (GB)"
+              type="number"
+              value={newServer.memory.total}
+              onChange={(e) => setNewServer({ 
+                ...newServer, 
+                memory: { ...newServer.memory, total: parseFloat(e.target.value) || 0 }
+              })}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Disk Used (GB)"
+              type="number"
+              value={newServer.disk.used}
+              onChange={(e) => setNewServer({ 
+                ...newServer, 
+                disk: { ...newServer.disk, used: parseFloat(e.target.value) || 0 }
+              })}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="Total Disk (GB)"
+              type="number"
+              value={newServer.disk.total}
+              onChange={(e) => setNewServer({ 
+                ...newServer, 
+                disk: { ...newServer.disk, total: parseFloat(e.target.value) || 0 }
+              })}
+              margin="normal"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAddServer(false)}>Cancel</Button>
+          <Button onClick={handleAddServer} variant="contained">Add Server</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

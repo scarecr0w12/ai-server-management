@@ -1,0 +1,44 @@
+{
+  "family": "windsurf-frontend",
+  "networkMode": "awsvpc",
+  "containerDefinitions": [
+    {
+      "name": "windsurf-frontend",
+      "image": "windsurf-frontend:latest",
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "4000"
+        },
+        {
+          "name": "REACT_APP_API_URL",
+          "value": "http://windsurf-backend:5000"
+        },
+        {
+          "name": "REACT_APP_WS_URL",
+          "value": "ws://windsurf-backend:5000"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/windsurf-frontend",
+          "awslogs-region": "us-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/ecsTaskExecutionRole"
+}

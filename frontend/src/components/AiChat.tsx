@@ -175,33 +175,72 @@ export default function AiChat() {
   };
 
   const handleSendMessage = () => {
-    if (input.trim() && socket && currentConversationId) {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        conversationId: currentConversationId,
-        role: 'user',
-        content: input.trim(),
-        timestamp: new Date()
-      };
-      
-      setMessages(prevMessages => [...prevMessages, userMessage]);
-      setLoading(true);
-      
-      // Include prompt engineering context
-      socket.emit('ai:query', {
-        query: input.trim(),
-        conversationId: currentConversationId,
-        includeHistory: true,
-        context: {
-          promptTemplate: selectedTemplate,
-          urgencyLevel,
-          expertiseLevel,
-          customSettings: {
-            temperature: urgencyLevel === 'critical' ? 0.3 : 0.7,
-            maxTokens: expertiseLevel === 'beginner' ? 1500 : 1000
+    if (input.trim() && socket) {
+      // If no conversation exists, create one first
+      if (!currentConversationId) {
+        const newConversationId = 'conv-' + Math.random().toString(36).substr(2, 9);
+        socket.emit('ai:create-conversation', { 
+          userId: 'user-' + Math.random().toString(36).substr(2, 9), 
+          title: 'New Chat',
+          id: newConversationId
+        });
+        setCurrentConversationId(newConversationId);
+        
+        // Send the message with the new conversation ID
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          conversationId: newConversationId,
+          role: 'user',
+          content: input.trim(),
+          timestamp: new Date()
+        };
+        
+        setMessages([userMessage]);
+        setLoading(true);
+        
+        socket.emit('ai:query', {
+          query: input.trim(),
+          conversationId: newConversationId,
+          includeHistory: true,
+          context: {
+            promptTemplate: selectedTemplate,
+            urgencyLevel,
+            expertiseLevel,
+            customSettings: {
+              temperature: urgencyLevel === 'critical' ? 0.3 : 0.7,
+              maxTokens: expertiseLevel === 'beginner' ? 1500 : 1000
+            }
           }
-        }
-      });
+        });
+      } else {
+        // Normal message sending with existing conversation
+        const userMessage: Message = {
+          id: Date.now().toString(),
+          conversationId: currentConversationId,
+          role: 'user',
+          content: input.trim(),
+          timestamp: new Date()
+        };
+        
+        setMessages(prevMessages => [...prevMessages, userMessage]);
+        setLoading(true);
+        
+        // Include prompt engineering context
+        socket.emit('ai:query', {
+          query: input.trim(),
+          conversationId: currentConversationId,
+          includeHistory: true,
+          context: {
+            promptTemplate: selectedTemplate,
+            urgencyLevel,
+            expertiseLevel,
+            customSettings: {
+              temperature: urgencyLevel === 'critical' ? 0.3 : 0.7,
+              maxTokens: expertiseLevel === 'beginner' ? 1500 : 1000
+            }
+          }
+        });
+      }
       
       setInput('');
     }

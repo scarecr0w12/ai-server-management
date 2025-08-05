@@ -28,4 +28,4 @@ def chat():
     return jsonify({"response": "Hello! I'm your server management assistant."})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5010)

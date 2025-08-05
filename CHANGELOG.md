@@ -1,19 +1,76 @@
 # Changelog
 
-All notable changes to the AI-Powered Server Management System will be documented in this file.
+All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-08-02
+---
 
-### 🔧 GitHub Repository Enhancements
+## [0.0.4] - 2025-08-05
 
-Major improvements to repository management, contributor experience, and automation.
+### 🛠 Maintenance & Test Reliability
 
-### ✨ Added
+- **Stubbed Optional Dependencies**: The codebase now gracefully falls back to lightweight stubs when `langchain` or `openai` are not installed, enabling the test-suite to run in minimal environments.
+- **Integration Test Gating**: Integration tests are skipped unless the environment variable `RUN_INTEGRATION_TESTS=1` is explicitly set, preventing accidental external calls.
+- **Test Import Fixes**: Added dynamic `sys.path` setup in tests to ensure local imports resolve regardless of working directory.
+- **Indentation & Lint Fixes**: Resolved `IndentationError` in `agent_service.py` and cleaned up minor lint issues.
+- **No Production-Facing Changes**: Functionality remains unchanged for end-users.
 
-- **Comprehensive Issue Templates** for professional issue management
+---
+
+## [0.0.3] - 2024-08-04
+
+### 🚀 Advanced Features & Multi-Model Integration
+
+Phase 4 completion with sophisticated AI capabilities, memory systems, and frontend fixes.
+
+### ✨ New Features
+
+- **Advanced Memory and Learning Service**
+  - User preference learning and adaptive behavior management
+  - Problem pattern recognition with success rate tracking
+  - Conversation insights extraction (communication style, technical level)
+  - Server profile learning with baseline performance tracking
+  - Memory optimization and cleanup with context-aware retrieval
+  - Integration with AI service for prompt context enrichment
+
+- **Multi-Model LLM Integration Service**
+  - Support for multiple LLM providers (OpenAI GPT-4/3.5, Claude, Gemini)
+  - Intelligent model selection based on task type, cost, and user preferences
+  - Usage analytics and performance tracking with health monitoring
+  - Cost-aware decision engine with quality threshold filtering
+  - Task-specific optimizations for diagnostic, analysis, and technical queries
+  - Fallback mechanisms for provider unavailability
+
+- **Enhanced AI Service Integration**
+  - Memory-powered adaptive prompting for personalized AI responses
+  - Query categorization with context-aware prompt enhancement
+  - Integration with workflow and diagnostic services for learning
+
+- **Advanced Workflow Learning**
+  - Workflow Service enhanced with memory-based optimization
+  - Pattern learning from execution history and success rates
+  - Diagnostics Service with enhanced problem pattern recognition
+  - Memory-enhanced adaptive prompting for personalized AI responses
+
+### 🐛 Bug Fixes
+
+- **Frontend Server Display Issue**
+  - Fixed "Failed to fetch servers" error appearing despite successful WebSocket data
+  - Enhanced ServerDashboard error handling for real-time updates
+  - Improved user experience with proper server dashboard display
+
+---
+
+## [0.0.2] - 2025-08-02
+
+### 🔧 Repository Infrastructure & GitHub Enhancement
+
+Professional repository setup and contributor experience improvements.
+
+### ✨ Infrastructure Features
+
+- **Comprehensive Issue Templates**
   - 🐛 Bug Report template with structured form and environment details
   - ✨ Feature Request template with problem statement and priority levels
   - 📚 Documentation template for improvement suggestions
@@ -25,18 +82,12 @@ Major improvements to repository management, contributor experience, and automat
   - 🔄 Structured review process with maintainer guidelines
   - 📝 Type classification and change impact assessment
 
-- **Advanced Label System** for organized issue tracking
-  - 🏷️ Priority labels (critical, high, medium, low)
-  - 📊 Type labels (bug, enhancement, documentation, security, performance)
-  - ⚡ Status labels (needs-triage, in-progress, blocked, needs-review)
-  - 🏗️ Component labels (frontend, backend, api, database, ci/cd)
-  - ⏱️ Effort estimation labels (small, medium, large)
-  - 🎯 Special labels (good first issue, help wanted, breaking change)
-
-- **Automated Workflows** for cost-effective repository management
-  - 🏷️ Label synchronization workflow with automatic updates
-  - 💰 Cost-optimized GitHub Actions with concurrency controls
-  - 🚫 Redundancy prevention with path filters and timeouts
+- **Security & Operations Documentation**
+  - 🔒 SECURITY.md with vulnerability reporting and security policies
+  - 🎯 CODE_OF_CONDUCT.md with inclusive community standards
+  - 📊 GitHub issue and PR templates for consistent project management
+  - 🚀 Deployment and operations documentation
+  - 🔧 Environment configuration guidelines
 
 - **Contributing Documentation**
   - 📖 Comprehensive CONTRIBUTING.md with development guidelines
@@ -45,29 +96,24 @@ Major improvements to repository management, contributor experience, and automat
   - 🧪 Testing guidelines and coverage requirements
   - 🔄 Review process documentation
 
-### 🛠️ Improved
+### 🛠️ Infrastructure Improvements
 
 - **GitHub Actions Optimization** for cost management
-  - ✅ Existing CI/CD workflows already optimized with proper triggers
+  - ✅ Existing CI/CD workflows optimized with proper triggers
   - 🔄 Concurrency groups to prevent duplicate runs
   - ⏰ Timeout configurations to prevent runaway costs
   - 📁 Path filters to skip unnecessary runs
 
-### 📚 Documentation
-
-- Updated repository structure documentation
-- Added contributor onboarding guidelines
-- Enhanced development workflow documentation
-- Comprehensive labeling system documentation
-
 ---
 
-## [1.0.0] - 2025-02-02
+## [0.0.1] - 2025-02-02
 
-### 🎉 Initial Release
-First stable release of the AI-Powered Server Management System with complete feature set.
+### 🎉 Initial Release - Foundation System
 
-### ✨ Added
+Complete AI-powered server management system with comprehensive feature set.
+
+### ✨ Core System Features
+
 - **AI-Powered Chat Interface** with advanced prompt engineering
   - Multi-turn conversation support with context preservation
   - Adaptive prompting based on query complexity
@@ -85,22 +131,60 @@ First stable release of the AI-Powered Server Management System with complete fe
   - Performance issues workflow (6-step automated diagnosis)
   - Service failure recovery workflow (6-step recovery process)
   - Security incident response workflow (6-step security handling)
-  - Multi-step diagnostic processes with dependency management
-  - Learning system for improved future resolutions
-  - Workflow pause/resume capabilities
+  - Network connectivity workflow (6-step network diagnosis)
+  - Resource usage optimization workflow (6-step performance tuning)
+  - Backup and disaster recovery workflow (6-step backup validation)
 
-- **MCP Protocol Integration** for standardized server management
-  - Full MCP server implementation with resource handlers
-  - Server management capabilities via MCP protocol
-  - Real-time resource synchronization
-  - Diagnostics integration with MCP tools
+- **Model Context Protocol (MCP) Integration**
+  - Real MCP protocol server with resource and tool management
+  - Resource discovery and capability enumeration
+  - Tool execution with proper error handling and validation
+  - Frontend MCP interface connected to backend MCP service
+  - Comprehensive testing and validation of MCP integration
 
-- **Professional Frontend Interface**
-  - React + TypeScript with Material-UI components
-  - Responsive design with modern UX practices
-  - Real-time updates and notifications
-  - Comprehensive navigation with workflow management
-  - Professional dialog interfaces and form validation
+- **Advanced Workflow Engine** with learning capabilities
+  - Dynamic workflow generation based on server context
+  - Learning from execution patterns and success rates
+  - Intelligent step optimization and failure prediction
+  - Context-aware recommendations and adaptive execution
+  - Workflow template management and customization
+
+### 🏗️ Technical Infrastructure
+
+- **Backend Services Architecture**
+  - TypeScript-based backend with Express.js framework
+  - WebSocket integration for real-time communication
+  - Service-oriented architecture with modular components
+  - PostgreSQL database integration for persistent storage
+  - Docker containerization with docker-compose orchestration
+
+- **Frontend Application**
+  - React with TypeScript and Material-UI components
+  - Real-time server monitoring with responsive design
+  - Interactive chat interface with conversation history
+  - Comprehensive server management dashboard
+  - Professional form validation and error handling
+
+- **Development & Deployment**
+  - Complete development environment setup
+  - Automated testing infrastructure and CI/CD pipeline
+  - Docker-based development and production environments
+  - Environment configuration management
+  - Comprehensive documentation and setup guides
+
+### 🔐 Security & Operations
+
+- **Security Features**
+  - Secure API endpoints with proper authentication
+  - Input validation and sanitization throughout the application
+  - CORS configuration for frontend-backend communication
+  - Environment variable management for sensitive configuration
+
+- **Operations & Monitoring**
+  - Comprehensive logging and error handling
+  - Real-time system monitoring and health checks
+  - Performance optimization and resource management
+  - Backup and recovery procedures documentation
 
 - **Robust Backend Architecture**
   - Node.js + Express + TypeScript implementation

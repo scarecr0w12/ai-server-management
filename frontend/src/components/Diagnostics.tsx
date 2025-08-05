@@ -66,11 +66,15 @@ export default function Diagnostics({ serverId }: DiagnosticsProps) {
 
   useEffect(() => {
     const handleDiagnosticResult = (data: DiagnosticResult) => {
+      console.log('🔍 Frontend received diagnostics result:', data);
+      console.log('🔍 Result has analysis:', !!data.analysis);
+      console.log('🔍 Result has recommendations:', data.recommendations?.length || 0);
       setLoading(false);
       setResult(data);
     };
 
     const handleError = (data: { error: string }) => {
+      console.log('❌ Frontend received diagnostics error:', data);
       setLoading(false);
       setError(data.error);
     };
