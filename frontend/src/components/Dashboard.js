@@ -17,15 +17,9 @@ function Dashboard() {
   const [openAddServer, setOpenAddServer] = useState(false);
   const [newServer, setNewServer] = useState({
     name: '',
-    status: 'online',
-    load: 0,
-    memory: { used: 0, total: 0, percentage: 0 },
-    cpu: { usage: 0, cores: 0 },
-    disk: { used: 0, total: 0, percentage: 0 },
-    network: { bytesIn: 0, bytesOut: 0 },
-    uptime: 0,
-    alerts: 0,
-    services: { running: 0, total: 0 }
+    host: '',
+    ssh_user: 'root',
+    ssh_port: 22
   });
 
   useEffect(() => {
@@ -125,11 +119,7 @@ function Dashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...newServer,
-          id: `server-${Date.now()}`,
-          lastCheck: new Date().toISOString()
-        }),
+        body: JSON.stringify(newServer),
       });
 
       if (response.ok) {
@@ -149,15 +139,9 @@ function Dashboard() {
         setOpenAddServer(false);
         setNewServer({
           name: '',
-          status: 'online',
-          load: 0,
-          memory: { used: 0, total: 0, percentage: 0 },
-          cpu: { usage: 0, cores: 0 },
-          disk: { used: 0, total: 0, percentage: 0 },
-          network: { bytesIn: 0, bytesOut: 0 },
-          uptime: 0,
-          alerts: 0,
-          services: { running: 0, total: 0 }
+          host: '',
+          ssh_user: 'root',
+          ssh_port: 22
         });
       } else {
         console.error('Failed to add server');
@@ -277,73 +261,36 @@ function Dashboard() {
               value={newServer.name}
               onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
               margin="normal"
+              required
+              helperText="Display name for this server"
             />
             <TextField
               fullWidth
-              select
-              label="Status"
-              value={newServer.status}
-              onChange={(e) => setNewServer({ ...newServer, status: e.target.value })}
+              label="Host (IP or Hostname)"
+              value={newServer.host}
+              onChange={(e) => setNewServer({ ...newServer, host: e.target.value })}
               margin="normal"
-            >
-              <option value="online">Online</option>
-              <option value="offline">Offline</option>
-              <option value="maintenance">Maintenance</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label="CPU Usage (%)"
-              type="number"
-              value={newServer.cpu.usage}
-              onChange={(e) => setNewServer({ 
-                ...newServer, 
-                cpu: { ...newServer.cpu, usage: parseInt(e.target.value) || 0 }
-              })}
-              margin="normal"
+              required
+              helperText="IP address or hostname of the server to monitor"
+              placeholder="192.168.1.100 or server.example.com"
             />
             <TextField
               fullWidth
-              label="Memory Used (GB)"
-              type="number"
-              value={newServer.memory.used}
-              onChange={(e) => setNewServer({ 
-                ...newServer, 
-                memory: { ...newServer.memory, used: parseFloat(e.target.value) || 0 }
-              })}
+              label="SSH Username"
+              value={newServer.ssh_user}
+              onChange={(e) => setNewServer({ ...newServer, ssh_user: e.target.value })}
               margin="normal"
+              required
+              helperText="SSH username for server access"
             />
             <TextField
               fullWidth
-              label="Total Memory (GB)"
+              label="SSH Port"
               type="number"
-              value={newServer.memory.total}
-              onChange={(e) => setNewServer({ 
-                ...newServer, 
-                memory: { ...newServer.memory, total: parseFloat(e.target.value) || 0 }
-              })}
+              value={newServer.ssh_port}
+              onChange={(e) => setNewServer({ ...newServer, ssh_port: parseInt(e.target.value) || 22 })}
               margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Disk Used (GB)"
-              type="number"
-              value={newServer.disk.used}
-              onChange={(e) => setNewServer({ 
-                ...newServer, 
-                disk: { ...newServer.disk, used: parseFloat(e.target.value) || 0 }
-              })}
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Total Disk (GB)"
-              type="number"
-              value={newServer.disk.total}
-              onChange={(e) => setNewServer({ 
-                ...newServer, 
-                disk: { ...newServer.disk, total: parseFloat(e.target.value) || 0 }
-              })}
-              margin="normal"
+              helperText="SSH port (usually 22)"
             />
           </Box>
         </DialogContent>

@@ -30,7 +30,7 @@ export interface Server {
   };
 }
 
-import { Pool } from 'pg';
+import * as pg from 'pg';
 import crypto from 'crypto';
 
 // Row shape returned by the servers + server_metrics LEFT JOIN
@@ -53,10 +53,10 @@ interface ServerRow {
 
 
 export class ServerManager {
-  private pool: Pool;
+  private pool: pg.Pool;
 
   constructor() {
-    this.pool = new Pool({
+    this.pool = new pg.Pool({
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || '5432', 10),
       user: process.env.DB_USER,

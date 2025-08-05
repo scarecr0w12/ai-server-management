@@ -1,0 +1,7 @@
+{
+  "name": "Test VPS 51.79.59.111",
+  "host": "51.79.59.111",
+  "sshPort": 22,
+  "username": "root",
+  "createdAt": "2025-08-05T13:10:37-05:00"
+}

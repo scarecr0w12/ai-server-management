@@ -17,6 +17,7 @@
     "src/**/*"
   ],
   "exclude": [
+    "src/types/pg.d.ts",
     "node_modules"
   ]
 }

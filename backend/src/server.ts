@@ -18,7 +18,22 @@ initializeMCPAnalyzers();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:4000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, etc)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost and any IP on port 4000
+    if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+):4000$/)) {
+      return callback(null, true);
+    }
+    
+    // Fallback to environment variable
+    if (origin === process.env.FRONTEND_URL) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -26,7 +41,22 @@ app.use(cors({
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:4000',
+    origin: function (origin, callback) {
+      // Allow requests with no origin
+      if (!origin) return callback(null, true);
+      
+      // Allow localhost and any IP on port 4000
+      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+):4000$/)) {
+        return callback(null, true);
+      }
+      
+      // Fallback to environment variable
+      if (origin === process.env.FRONTEND_URL) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     methods: ['GET', 'POST']
   },
   transports: ['websocket'],

@@ -32,10 +32,21 @@ export function getConfig() {
   return config;
 }
 
-// Function to get API URL
+// Function to get API URL - dynamic based on current hostname
 export function getApiUrl() {
   const config = getConfig();
-  return config.REACT_APP_API_URL;
+  
+  // If we have a configured API URL and it's not localhost, use it
+  if (config.REACT_APP_API_URL && !config.REACT_APP_API_URL.includes('localhost')) {
+    return config.REACT_APP_API_URL;
+  }
+  
+  // Otherwise, construct URL based on current hostname
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // Use same hostname as frontend but port 5000 for backend
+  return `${protocol}//${hostname}:5000`;
 }
 
 // Function to get WebSocket URL
