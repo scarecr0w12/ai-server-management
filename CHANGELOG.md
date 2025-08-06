@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.0.6] - 2025-08-06
+
+### 🔧 Fixed
+
+- **WorkflowManager API Connectivity**
+  - Resolved `net::ERR_NAME_NOT_RESOLVED` errors at WorkflowManager.tsx lines 128 and 132
+  - Fixed API URL fallback logic to use localhost instead of Docker internal hostnames
+  - Eliminated persistent `net::ERR_CONNECTION_REFUSED` errors from frontend
+
+- **Frontend Build Cache Issues**
+  - Resolved build/source-mapping issues preventing code changes from propagating to JavaScript bundle
+  - Performed aggressive clean rebuild with Docker system pruning to clear all cached layers
+  - Fixed environment variable injection in Docker containers
+
+- **Backend Service Connectivity**
+  - Resolved PostgreSQL schema conflict: `Key (typname, typnamespace)=(servers, 2200) already exists`
+  - Fixed backend service crashes due to database type conflicts
+  - Restored healthy backend service status with proper database connections
+
+### 🚀 Added
+
+- **Complete Workflow UI Integration**
+  - Added WorkflowManager React component with full TypeScript interfaces
+  - Integrated "/workflows" route with navigation menu
+  - Professional Material-UI interface with "Agentic Workflows" management
+  - Real-time workflow polling and status updates
+  - Workflow creation dialogs with server selection and configuration options
+  - Backend API integration for workflow CRUD operations
+
+- **Enhanced System Architecture**
+  - All services (frontend, backend, database) now running healthy in Docker
+  - Clean console logs with no API connectivity errors
+  - Full-stack workflow execution capability
+  - Professional user experience with complete error resolution
+
+### 🎯 Enhanced
+
+- **Developer Experience**
+  - Comprehensive error resolution and debugging workflow
+  - Improved Docker container orchestration and health checks
+  - Enhanced frontend rebuild processes with aggressive cache clearing
+  - Better error messaging and logging for troubleshooting
+
+---
+
 ## [0.0.5] - 2025-08-06
 
 ### 🔧 Fixed

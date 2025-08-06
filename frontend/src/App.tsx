@@ -9,6 +9,7 @@ import DiagnosticsPage from './components/DiagnosticsPage';
 import MCPConnection from './components/MCPConnection';
 import Layout from './components/Layout';
 import ServerPage from './components/ServerPage';
+import WorkflowManager from './components/WorkflowManager';
 
 function App() {
   console.log('App rendering');
@@ -28,6 +29,7 @@ function App() {
             <Route path="/servers/:id" element={<ServerPage />} />
             <Route path="/ai" element={<AiChat />} />
             <Route path="/diagnostics" element={<DiagnosticsPage />} />
+            <Route path="/workflows" element={<WorkflowManager />} />
             <Route path="/mcp" element={<MCPConnection />} />
           </Routes>
         </Layout>

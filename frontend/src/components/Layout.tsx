@@ -13,6 +13,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Dashboard', path: '/' },
     { name: 'AI Chat', path: '/ai' },
     { name: 'Diagnostics', path: '/diagnostics' },
+    { name: 'Workflows', path: '/workflows' },
     { name: 'MCP', path: '/mcp' },
   ];
 
