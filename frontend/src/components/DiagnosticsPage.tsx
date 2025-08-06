@@ -3,11 +3,17 @@ import { Box, Grid, Typography, Alert } from '@mui/material';
 import ServerConnection from './ServerConnection';
 import Diagnostics from './Diagnostics';
 
-export default function DiagnosticsPage() {
-  const [connectedServerId, setConnectedServerId] = useState<string | null>(null);
+interface DiagnosticsPageProps {
+  serverId?: string;
+}
+
+export default function DiagnosticsPage({ serverId: propServerId }: DiagnosticsPageProps) {
+  const [connectedServerId, setConnectedServerId] = useState<string | null>(propServerId || null);
   const [serverName, setServerName] = useState<string | null>(null);
 
   const handleServerConnected = (serverId: string) => {
+    if (propServerId) return; // ignore if serverId forced by prop
+
     setConnectedServerId(serverId);
   };
 

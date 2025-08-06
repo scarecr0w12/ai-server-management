@@ -258,7 +258,7 @@ export class WorkflowService {
     return workflowId;
   }
 
-  private async executeWorkflow(workflowId: string): Promise<void> {
+  public async executeWorkflow(workflowId: string): Promise<void> {
     const workflow = this.activeWorkflows.get(workflowId);
     if (!workflow) return;
 

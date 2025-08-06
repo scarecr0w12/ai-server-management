@@ -59,10 +59,12 @@ const io = new Server(httpServer, {
     },
     methods: ['GET', 'POST']
   },
-  transports: ['websocket'],
+  transports: ['websocket', 'polling'],
   allowEIO3: true,
   pingInterval: 25000,
-  pingTimeout: 20000,
+  pingTimeout: 60000,
+  upgradeTimeout: 30000,
+  maxHttpBufferSize: 1e8,
   allowRequest: (req, callback) => {
     console.log('WebSocket connection request:', req.url, req.headers);
     callback(null, true);
@@ -489,6 +491,70 @@ app.post('/api/servers', async (req, res) => {
     const serverData = req.body;
     const newServer = await serverManager.addServer(serverData);
     res.status(201).json(newServer);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+// Workflow endpoints
+app.post('/api/workflows', async (req, res) => {
+  try {
+    const { workflowName, context } = req.body;
+    if (!workflowName || !context || !context.serverId) {
+      return res.status(400).json({ error: 'workflowName and context with serverId required' });
+    }
+    const workflowId = await workflowService.startWorkflow(workflowName, context);
+    // Execute workflow asynchronously
+    workflowService.executeWorkflow(workflowId).catch(console.error);
+    res.json({ workflowId, status: 'started' });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.get('/api/workflows', async (req, res) => {
+  try {
+    const workflows = await workflowService.listActiveWorkflows();
+    res.json({ workflows });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.get('/api/workflows/:id', async (req, res) => {
+  try {
+    const workflow = await workflowService.getWorkflowStatus(req.params.id);
+    if (!workflow) {
+      return res.status(404).json({ error: 'Workflow not found' });
+    }
+    res.json(workflow);
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.get('/api/workflows/templates', async (req, res) => {
+  try {
+    const templates = await workflowService.getAvailableWorkflows();
+    res.json({ templates });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.post('/api/workflows/:id/pause', async (req, res) => {
+  try {
+    const success = await workflowService.pauseWorkflow(req.params.id);
+    res.json({ success });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.post('/api/workflows/:id/resume', async (req, res) => {
+  try {
+    const success = await workflowService.resumeWorkflow(req.params.id);
+    res.json({ success });
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }

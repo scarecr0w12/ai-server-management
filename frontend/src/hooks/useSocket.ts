@@ -11,11 +11,14 @@ export function useSocket() {
     const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:5000';
     console.log('Creating socket connection to:', wsUrl);
     socketRef.current = io(wsUrl, {
-      transports: ['websocket'],
+      transports: ['polling'], // Force polling-only to eliminate WebSocket errors in Docker
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      timeout: 20000,
+      timeout: 30000,
+      upgrade: false,
+      autoConnect: true,
+      forceNew: true,
     });
 
     if (socketRef.current) {

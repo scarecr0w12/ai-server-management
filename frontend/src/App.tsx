@@ -8,6 +8,7 @@ import AiChat from './components/AiChat';
 import DiagnosticsPage from './components/DiagnosticsPage';
 import MCPConnection from './components/MCPConnection';
 import Layout from './components/Layout';
+import ServerPage from './components/ServerPage';
 
 function App() {
   console.log('App rendering');
@@ -24,6 +25,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/servers" element={<ServerDashboard />} />
+            <Route path="/servers/:id" element={<ServerPage />} />
             <Route path="/ai" element={<AiChat />} />
             <Route path="/diagnostics" element={<DiagnosticsPage />} />
             <Route path="/mcp" element={<MCPConnection />} />

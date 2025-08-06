@@ -24,11 +24,17 @@ RUN apk add --no-cache nginx curl
 # Create a script to inject environment variables at runtime
 RUN echo '#!/bin/sh' > /app/inject-env.sh && \
     echo '' >> /app/inject-env.sh && \
+    echo '# Set default values if not provided' >> /app/inject-env.sh && \
+    echo 'REACT_APP_API_URL=${REACT_APP_API_URL:-"http://localhost:5000"}' >> /app/inject-env.sh && \
+    echo 'REACT_APP_WS_URL=${REACT_APP_WS_URL:-"ws://localhost:5000"}' >> /app/inject-env.sh && \
+    echo '' >> /app/inject-env.sh && \
     echo '# Inject environment variables into the built JavaScript files' >> /app/inject-env.sh && \
     echo 'for file in /app/build/static/js/*.js; do' >> /app/inject-env.sh && \
     echo '  if [ -f "$file" ]; then' >> /app/inject-env.sh && \
-    echo '    sed -i "s|http://localhost:4000|${REACT_APP_API_URL}|g" "$file"' >> /app/inject-env.sh && \
-    echo '    sed -i "s|http://localhost:5000|${REACT_APP_WS_URL}|g" "$file"' >> /app/inject-env.sh && \
+    echo '    echo "Processing file: $file"' >> /app/inject-env.sh && \
+    echo '    sed -i "s|ws://localhost:5000|${REACT_APP_WS_URL}|g" "$file"' >> /app/inject-env.sh && \
+    echo '    sed -i "s|http://localhost:5000|${REACT_APP_API_URL}|g" "$file"' >> /app/inject-env.sh && \
+    echo '    sed -i "s|localhost:5000|$(echo ${REACT_APP_WS_URL#ws://})|g" "$file"' >> /app/inject-env.sh && \
     echo '  fi' >> /app/inject-env.sh && \
     echo 'done' >> /app/inject-env.sh && \
     echo '' >> /app/inject-env.sh && \

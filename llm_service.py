@@ -8,7 +8,8 @@ lightweight fallbacks when those imports fail.
 from __future__ import annotations
 
 import os
-from typing import Any
+import json
+from typing import Any, Sequence
 
 try:
     from openai import OpenAI  # type: ignore
@@ -17,6 +18,9 @@ try:
     from langchain.chat_models import ChatOpenAI  # type: ignore
     from langchain.tools import BaseTool  # type: ignore
     from dotenv import load_dotenv  # type: ignore
+    from prompt_engineering import build_prompt
+    from multi_model_service import get_multi_model_service
+    IMPORTS_AVAILABLE = True
 except ModuleNotFoundError:
     # Provide minimal stubs so `process_chat_message` still works.
     OpenAI = Any  # type: ignore
@@ -57,14 +61,25 @@ except Exception:  # pragma: no cover
 
 # Define tools for the agent
 # These will be expanded as we add more functionality
+from mcp_client import MCPClient
+
+_MCP_CLIENT_TOOL = MCPClient()
+# Do not connect immediately; defer until first use to avoid errors during import.
+
 class ServerManagementTool(BaseTool):  # type: ignore
     name = "server_management"
-    description = "Tool for managing servers and services"
-    
+    description = "Tool for managing servers and services via MCP"
+
     def _run(self, query: str):
-        # This will be implemented with MCP connections
-        return "Server management functionality will be implemented via MCP connections"
-    
+        """Very naive implementation: if query contains 'status' -> GET_SERVER_STATUS."""
+        if not _MCP_CLIENT_TOOL.connected:
+            _MCP_CLIENT_TOOL.connect()
+        if "status" in query.lower():
+            resp = _MCP_CLIENT_TOOL.get_server_status("all")
+        else:
+            resp = _MCP_CLIENT_TOOL.execute_command("all", query)
+        return json.dumps(resp or {"status": "error", "message": "MCP unavailable"})
+
     async def _arun(self, query: str):
         return self._run(query)
 
@@ -87,10 +102,19 @@ agent = initialize_agent(
     verbose=True
 )
 
-def process_chat_message(message: str):
+def process_chat_message(message: str, history: Sequence[str] | None = None, model_id: str | None = None, server_id: str | None = None):
     """Process a chat message using the LLM agent"""
     try:
-        response = agent.run(message)
-        return response
+        # Try multi-model service first, fallback to LangChain agent
+        multi_model = get_multi_model_service()
+        if multi_model and multi_model.default_model:
+            prompt = build_prompt(message, history=history, server_id=server_id)
+            response = multi_model.generate_response(prompt, model_id=model_id)
+            return response
+        else:
+            # Fallback to original LangChain agent
+            prompt = build_prompt(message, history=history, server_id=server_id)
+            response = agent.run(prompt)
+            return response
     except Exception as e:
         return f"Error processing message: {str(e)}"

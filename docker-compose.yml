@@ -35,8 +35,8 @@ services:
       - "4000:4000"
     environment:
       - PORT=4000
-      - REACT_APP_API_URL=http://localhost:5000
-      - REACT_APP_WS_URL=ws://localhost:5000
+      - REACT_APP_API_URL=http://192.168.50.253:5000
+      - REACT_APP_WS_URL=ws://192.168.50.253:5000
     env_file:
       - .env
     depends_on:

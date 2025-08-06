@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [0.0.5] - 2025-08-06
+
+### 🔧 Fixed
+- **Docker Networking for External Access**
+  - Frontend now uses host IP address (192.168.50.253) instead of Docker-internal service names
+  - System can now be accessed from other computers on the network
+  - Resolved DNS resolution issues for external clients
+
+- **Socket.IO Connection Stability**
+  - Fixed persistent WebSocket errors at `useSocket.ts:31` and `WebSocket.js:119`
+  - Changed Socket.IO client to use polling-only transport for Docker environments
+  - Eliminated WebSocket upgrade failures in container-to-container communication
+
+- **Frontend Build and Environment Variable Injection**
+  - Resolved build cache issues preventing Socket.IO configuration changes from taking effect
+  - Improved runtime environment variable injection in Docker containers
+  - Enhanced error handling and logging for debugging container connectivity
+
+### 🎯 Enhanced
+- **Per-Server UI Components**
+  - Added `ServerPage.tsx` component for server-specific diagnostics and chat
+  - Enhanced routing to support per-server sub-pages (`/servers/:id`)
+  - Preserved global AI chat and diagnostics alongside server-specific views
+
+- **AI Services Integration**
+  - Enhanced `agent_service.py` with improved MCP client integration
+  - Updated `llm_service.py` with multi-model support and server-scoped memory
+  - Improved prompt engineering with auto-memory fetching
+
+### 🚀 Added
+- **Agentic Workflow Engine** (`workflow_engine.py`)
+  - Autonomous diagnostic routines with decision-making capabilities
+  - Workflow templates for common scenarios (performance, security, failure analysis)
+  - Multi-step workflow execution with dependency management
+
+- **Multi-Model AI Integration** (`multi_model_service.py`)
+  - Support for OpenAI, Anthropic Claude, Ollama, and HuggingFace models
+  - Unified interface with model-specific adapters
+  - Fallback mechanisms and health checks
+
+- **Memory & Learning System**
+  - Server-scoped memory storage and retrieval
+  - Context-aware AI interactions with historical learning
+  - Memory wipe functionality (full or partial by timestamp)
+
+### 🔄 Infrastructure
+- **Docker Configuration**
+  - Updated `docker-compose.yml` for external network access
+  - Improved frontend Dockerfile with better environment handling
+  - Enhanced container networking and port management
+
+- **Backend Integration**
+  - Added workflow REST endpoints in Node.js backend
+  - Enhanced Socket.IO server configuration for polling transport
+  - Improved CORS and WebSocket connection handling
+
+---
+
 ## [0.0.4] - 2025-08-05
 
 ### 🛠 Maintenance & Test Reliability

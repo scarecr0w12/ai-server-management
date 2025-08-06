@@ -1,5 +1,10 @@
 from typing import Optional, List
 import json
+from typing import Sequence
+
+from prompt_engineering import build_prompt
+from mcp_client import MCPClient
+from memory_client import store as mem_store
 
 # Attempt to import LangChain. If unavailable, fall back to lightweight stubs so the
 # rest of the application and test-suite can operate without the heavy dependency.
@@ -23,6 +28,10 @@ except ModuleNotFoundError:  # pragma: no cover – optional dependency
         async def _arun(self, query: str):  # type: ignore
             return self._run(query)
 
+
+# Global MCP client singleton
+_MCP_CLIENT = MCPClient()
+_MCP_CLIENT.connect()
 
 # Define base agent class
 class ServerManagementAgent:
@@ -53,20 +62,20 @@ class ServerManagementAgent:
                 
             except json.JSONDecodeError:
                 # Handle plain text requests
-                return self.agent.run(request)
+                prompt = build_prompt(request, history=None)  # TODO: pass real history
+                return self.agent.run(prompt)
                 
         except Exception as e:
             return f"Error processing request: {str(e)}"
             
     def get_server_status(self) -> str:
-        """
-        Get status of managed servers
-        """
-        # This will be implemented with MCP connections
-        return json.dumps({
-            'status': 'ok',
-            'servers': []
-        })
+        """Return status fetched via MCP connection."""
+        if not _MCP_CLIENT.connected:
+            _MCP_CLIENT.connect()
+        resp = _MCP_CLIENT.get_server_status("all")
+        if resp:
+            mem_store(json.dumps(resp), server_id="all", tags=["status"])
+        return json.dumps(resp or {"status": "error", "message": "MCP unavailable"})
         
     def execute_command(self, command: Optional[str]) -> str:
         """
@@ -75,11 +84,12 @@ class ServerManagementAgent:
         if not command:
             return "No command provided"
             
-        # This will be implemented with MCP connections
-        return json.dumps({
-            'status': 'ok',
-            'output': f"Command '{command}' executed successfully"
-        })
+        if not _MCP_CLIENT.connected:
+            _MCP_CLIENT.connect()
+        resp = _MCP_CLIENT.execute_command("all", command)
+        if resp:
+            mem_store(json.dumps(resp), server_id="all", tags=["command"])
+        return json.dumps(resp or {"status": "error", "message": "MCP unavailable"})
         
 # Define custom tools for server management
 class ServerStatusTool(BaseTool):

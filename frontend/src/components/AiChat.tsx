@@ -73,7 +73,11 @@ interface Conversation {
   };
 }
 
-export default function AiChat() {
+interface AiChatProps {
+  serverId?: string;
+}
+
+export default function AiChat({ serverId }: AiChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
